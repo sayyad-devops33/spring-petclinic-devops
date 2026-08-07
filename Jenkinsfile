@@ -2,6 +2,26 @@ pipeline {
 
     agent any
 
+    environment {
+
+        APP_NAME = 'spring-petclinic'
+
+        DOCKER_HUB_REPO = 'sayyaddevops33/spring-petclinic'
+
+    }
+
+     options {
+
+        timestamps()
+
+        buildDiscarder(logRotator(
+            numToKeepStr: '10'
+        ))
+
+        timeout(time: 30, unit: 'MINUTES')
+
+    }
+
     stages {
 
         stage('Checkout') {
@@ -26,7 +46,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh "docker build -t spring-petclinic:${BUILD_NUMBER} ."
+                sh "docker build -t ${APP_NAME}:${BUILD_NUMBER} ."
             }
         }
         stage('Push Docker Image') {
@@ -40,9 +60,9 @@ pipeline {
             sh '''
                 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-                docker tag spring-petclinic:${BUILD_NUMBER} $DOCKER_USER/spring-petclinic:${BUILD_NUMBER}
+                docker tag ${APP_NAME}:${BUILD_NUMBER} ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
 
-                docker push $DOCKER_USER/spring-petclinic:${BUILD_NUMBER}
+                docker push ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
 
                 docker logout
             '''
