@@ -16,6 +16,8 @@ pipeline {
             }
         }
 
+    
+
         stage('Archive Artifact') {
     steps {
         archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
@@ -49,5 +51,21 @@ pipeline {
 }
 
     }
+
+    post {
+
+    success {
+        echo 'Pipeline completed successfully!'
+    }
+
+    failure {
+        echo 'Pipeline failed!'
+    }
+
+    always {
+        echo 'Pipeline execution finished.'
+    }
+
+}
 
 }
