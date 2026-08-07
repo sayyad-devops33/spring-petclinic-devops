@@ -63,6 +63,7 @@ pipeline {
     }
 
     always {
+        junit 'target/surefire-reports/*.xml'
         echo 'Pipeline execution finished.'
     }
 
