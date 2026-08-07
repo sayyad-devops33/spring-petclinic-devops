@@ -64,6 +64,7 @@ pipeline {
 
     always {
         junit 'target/surefire-reports/*.xml'
+        cleanWs()
         echo 'Pipeline execution finished.'
     }
 
