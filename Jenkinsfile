@@ -70,6 +70,23 @@ pipeline {
     }
 }
 
+stage('Deploy') {
+    steps {
+        sh '''
+            docker pull ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
+
+            docker stop petclinic || true
+
+            docker rm petclinic || true
+
+            docker run -d \
+              --name petclinic \
+              -p 8081:8080 \
+              ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
+        '''
+    }
+}
+
     }
 
     post {
