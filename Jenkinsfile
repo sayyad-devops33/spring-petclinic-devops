@@ -73,6 +73,11 @@ pipeline {
 stage('Deploy') {
     steps {
         sh '''
+            PREVIOUS_BUILD=$((BUILD_NUMBER - 1))
+
+            echo "Current build: ${BUILD_NUMBER}"
+            echo "Previous build: ${PREVIOUS_BUILD}"
+
             docker pull ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
 
             docker stop petclinic || true
@@ -83,13 +88,28 @@ stage('Deploy') {
               --name petclinic \
               -p 8081:8080 \
               ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
-              echo "Waiting for application to start..."
-            sleep 10
 
-            echo "Running application health check..."
-            curl -f http://localhost:8081
+            echo "Waiting for application to become healthy..."
 
-            echo "Deployment and health check successful!"
+            healthy=false
+
+            for i in {1..12}; do
+                if curl -f -s http://localhost:8081 > /dev/null; then
+                    echo "Application is healthy!"
+                    healthy=true
+                    break
+                fi
+
+                echo "Health check attempt $i failed. Waiting 5 seconds..."
+                sleep 5
+            done
+
+            if [ "$healthy" = "true" ]; then
+                echo "Deployment successful!"
+            else
+                echo "Deployment failed."
+                exit 1
+            fi
         '''
     }
 }
