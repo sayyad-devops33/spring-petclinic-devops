@@ -105,13 +105,44 @@ stage('Deploy') {
                 echo "Health check attempt $i failed. Waiting 5 seconds..."
                 sleep 5
             done
+        if [ "$healthy" = "true" ]; then
+    echo "Deployment successful!"
+else
+    echo "Deployment failed. Starting rollback..."
 
-            if [ "$healthy" = "true" ]; then
-                echo "Deployment successful!"
-            else
-                echo "Deployment failed."
-                exit 1
-            fi
+    docker stop petclinic || true
+    docker rm petclinic || true
+
+    echo "Rolling back to build ${PREVIOUS_BUILD}..."
+
+    docker run -d \
+      --name petclinic \
+      -p 8081:8080 \
+      ${DOCKER_HUB_REPO}:${PREVIOUS_BUILD}
+
+    echo "Checking rollback health..."
+
+    rollback_healthy=false
+
+    for i in $(seq 1 12); do
+        if curl -f -s http://localhost:8081 > /dev/null; then
+            echo "Rollback health check successful on attempt $i!"
+            rollback_healthy=true
+            break
+        fi
+
+        echo "Rollback health check attempt $i failed. Waiting 5 seconds..."
+        sleep 5
+    done
+
+    if [ "$rollback_healthy" = "true" ]; then
+        echo "Rollback successful!"
+        exit 1
+    else
+        echo "CRITICAL: Rollback also failed!"
+        exit 1
+    fi
+fi
         '''
     }
 }
