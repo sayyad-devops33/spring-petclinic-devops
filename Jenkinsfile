@@ -75,10 +75,10 @@ stage('Deploy') {
         sh '''
             #!/bin/bash
             
-            PREVIOUS_BUILD=$((BUILD_NUMBER - 1))
+            
 
             echo "Current build: ${BUILD_NUMBER}"
-            echo "Previous build: ${PREVIOUS_BUILD}"
+            
 
             docker pull ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
 
@@ -113,12 +113,12 @@ else
     docker stop petclinic || true
     docker rm petclinic || true
 
-    echo "Rolling back to build ${PREVIOUS_BUILD}..."
+    echo "Rolling back to stable version"
 
     docker run -d \
       --name petclinic \
       -p 8081:8080 \
-      ${DOCKER_HUB_REPO}:${PREVIOUS_BUILD}
+      ${DOCKER_HUB_REPO}:stable
 
     echo "Checking rollback health..."
 
@@ -144,6 +144,31 @@ else
     fi
 fi
         '''
+    }
+}
+
+stage('Mark Stable') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-creds',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+
+            sh '''
+                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                docker pull ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
+
+                docker tag ${DOCKER_HUB_REPO}:${BUILD_NUMBER} ${DOCKER_HUB_REPO}:stable
+
+                docker push ${DOCKER_HUB_REPO}:stable
+
+                docker logout
+
+                echo "Build ${BUILD_NUMBER} is now marked as stable!"
+            '''
+        }
     }
 }
 
