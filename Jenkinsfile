@@ -83,6 +83,13 @@ stage('Deploy') {
               --name petclinic \
               -p 8081:8080 \
               ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
+              echo "Waiting for application to start..."
+            sleep 10
+
+            echo "Running application health check..."
+            curl -f http://localhost:8081
+
+            echo "Deployment and health check successful!"
         '''
     }
 }
