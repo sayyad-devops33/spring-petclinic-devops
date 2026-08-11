@@ -95,9 +95,9 @@ stage('Deploy') {
 
             healthy=false
 
-            for i in {1..12}; do
+                for i in $(seq 1 12); do
                 if curl -f -s http://localhost:8081 > /dev/null; then
-                    echo "Application is healthy!"
+                    echo "Application is healthy on attempt $i!"
                     healthy=true
                     break
                 fi
