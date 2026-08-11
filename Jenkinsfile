@@ -73,6 +73,8 @@ pipeline {
 stage('Deploy') {
     steps {
         sh '''
+            #!/bin/bash
+            
             PREVIOUS_BUILD=$((BUILD_NUMBER - 1))
 
             echo "Current build: ${BUILD_NUMBER}"
